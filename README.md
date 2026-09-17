@@ -1,6 +1,6 @@
 # Telco Customer Churn — pipeline MLOps de bout en bout
 
-Projet final du cours MLOps (M2 Campus Cyber). Objectif : un projet ML complet, reproductible et **100 % local**, où **MLflow trace tout** (paramètres, métriques, artefacts, dataset, modèle) et sert de **Model Registry**, avec un modèle **entraîné puis déployé** derrière une API.
+Projet final du cours MLOps (M1 Big Data & IA). Objectif : un projet ML complet, reproductible et **100 % local**, où **MLflow trace tout** (paramètres, métriques, artefacts, dataset, modèle) et sert de **Model Registry**, avec un modèle **entraîné puis déployé** derrière une API.
 
 | Étape | Outil | Fichier |
 |---|---|---|

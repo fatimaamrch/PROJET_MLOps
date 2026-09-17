@@ -163,7 +163,7 @@ def render(cfg: dict, models: list[dict], ev: dict, ds: dict) -> str:
 </style></head><body>
 
 <h1>Pipeline MLOps de bout en bout — Telco Customer Churn</h1>
-<p class="subtitle">Projet final du cours MLOps (M2 Campus Cyber) — Fatima Amrouche</p>
+<p class="subtitle">Projet final du cours MLOps (M1 Big Data &amp; IA) — Fatima Amrouche</p>
 <p class="meta">Généré le {date.today():%d/%m/%Y} à partir des runs MLflow et des figures du dépôt
 <code>github.com/fatimaamrch/PROJET_MLOps</code>. Modèle en production : <b>{champ_txt}</b>.</p>
 
