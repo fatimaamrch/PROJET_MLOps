@@ -1,0 +1,39 @@
+# Local "production-like" stack, 100% on your machine:
+#   - mlflow : tracking server + model registry (own storage under ./mlflow-server/)
+#   - api    : prediction service; loads models:/TelcoChurnClassifier@champion from the
+#              mlflow service, and falls back to the model baked into the image.
+#
+#   make docker-up                                  # start the stack
+#   MLFLOW_TRACKING_URI=http://localhost:5000 make pipeline   # log runs to the server
+#   MLflow UI -> http://localhost:5000     API docs -> http://localhost:8000/docs
+
+services:
+  mlflow:
+    image: ghcr.io/mlflow/mlflow:v3.16.1
+    command: >
+      mlflow server
+      --backend-store-uri sqlite:////mlflow/mlflow.db
+      --artifacts-destination /mlflow/mlartifacts
+      --serve-artifacts
+      --allowed-hosts "localhost:5000,127.0.0.1:5000,mlflow:5000"
+      --host 0.0.0.0 --port 5000
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./mlflow-server:/mlflow
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5000/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      MODEL_SOURCE: auto                      # registry first, then local export
+      MLFLOW_TRACKING_URI: http://mlflow:5000
+    depends_on:
+      mlflow:
+        condition: service_healthy

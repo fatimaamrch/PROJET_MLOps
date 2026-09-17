@@ -1,0 +1,72 @@
+# Central configuration for the whole pipeline.
+# Every script (data, train, evaluate, predict, API) reads this file, so no
+# path, column name or hyper-parameter is hard-coded in the source.
+
+data:
+  url: "https://raw.githubusercontent.com/IBM/telco-customer-churn-on-icp4d/master/data/Telco-Customer-Churn.csv"
+  raw_path: data/raw/telco_churn.csv
+  processed_path: data/processed/telco_churn_clean.csv
+  target: Churn
+  positive_label: "Yes"
+  id_column: customerID
+  test_size: 0.2
+  random_state: 42
+
+features:
+  numeric: ["tenure", "MonthlyCharges", "TotalCharges"]
+  categorical:
+    - gender
+    - SeniorCitizen
+    - Partner
+    - Dependents
+    - PhoneService
+    - MultipleLines
+    - InternetService
+    - OnlineSecurity
+    - OnlineBackup
+    - DeviceProtection
+    - TechSupport
+    - StreamingTV
+    - StreamingMovies
+    - Contract
+    - PaperlessBilling
+    - PaymentMethod
+
+model:
+  # "logreg" or "random_forest"
+  type: logreg
+  # Hyper-parameter grid explored by GridSearchCV (keys are model params).
+  param_grid:
+    logreg:
+      C: [0.01, 0.1, 1.0, 10.0]
+      penalty: ["l2"]
+      solver: ["lbfgs", "liblinear"]
+      class_weight: [null, "balanced"]
+    random_forest:
+      n_estimators: [100, 300]
+      max_depth: [null, 10, 20]
+      min_samples_leaf: [1, 5]
+      class_weight: [null, "balanced"]
+
+cv:
+  strategy: StratifiedKFold
+  n_splits: 5
+  scoring: roc_auc
+  n_jobs: -1
+
+mlflow:
+  tracking_uri: sqlite:///mlflow.db
+  experiment_name: telco-churn
+  registered_model_name: TelcoChurnClassifier
+  # Alias assigned to the newly trained version in the Model Registry.
+  # The API and predict.py load "models:/<registered_model_name>@<alias>".
+  alias: champion
+
+evaluation:
+  threshold: 0.5
+  reports_dir: reports
+
+serving:
+  # Local export used by the API when MLflow registry is not reachable
+  # (e.g. inside the Docker image).
+  model_export_path: artifacts/model.joblib
