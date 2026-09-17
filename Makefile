@@ -22,7 +22,7 @@ IMAGE   ?= telco-churn-api:latest
 export MLFLOW_DISABLE_AGENT_HINT=1
 
 .DEFAULT_GOAL := help
-.PHONY: help install data train evaluate predict pipeline test lint format \
+.PHONY: help install data train evaluate predict pipeline notebook report lab test lint format \
         mlflow-ui serve docker-build docker-run docker-up docker-down clean
 
 help: ## Show this help
@@ -52,6 +52,17 @@ predict: ## Batch inference. Usage: make predict INPUT=file.csv [OUTPUT=out.csv]
 	$(PY) src/predict.py --config $(CONFIG) --input $(INPUT) $(if $(OUTPUT),--output $(OUTPUT),)
 
 pipeline: data train evaluate ## Run the whole pipeline end to end
+
+# --- Analysis & reporting ------------------------------------------------------
+
+notebook: ## Execute the EDA notebook in place (figures -> reports/figures/)
+	$(PY) -m nbconvert --to notebook --execute --inplace notebooks/eda.ipynb --ExecutePreprocessor.timeout=300
+
+report: ## Build docs/rapport.html + docs/rapport.pdf from MLflow runs and figures
+	$(PY) scripts/build_report.py
+
+lab: ## Open Jupyter Lab on the notebooks
+	$(PY) -m jupyter lab notebooks/
 
 # --- Quality -----------------------------------------------------------------
 

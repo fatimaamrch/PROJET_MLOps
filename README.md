@@ -4,6 +4,7 @@ Projet final du cours MLOps (M2 Campus Cyber). Objectif : un projet ML complet, 
 
 | Étape | Outil | Fichier |
 |---|---|---|
+| Exploration des données (EDA) | Jupyter, seaborn | [notebooks/eda.ipynb](notebooks/eda.ipynb) |
 | Données (téléchargement, nettoyage, validation de schéma) | pandas | [src/data.py](src/data.py) |
 | Preprocessing + modèle dans un seul objet | sklearn `Pipeline` + `ColumnTransformer` | [src/pipeline.py](src/pipeline.py) |
 | Tuning + tracking + registry | `GridSearchCV`, `mlflow.autolog`, Model Registry (alias `@champion`) | [src/train.py](src/train.py) |
@@ -13,6 +14,7 @@ Projet final du cours MLOps (M2 Campus Cyber). Objectif : un projet ML complet, 
 | Config centralisée | YAML | [configs/config.yaml](configs/config.yaml) |
 | Tests | pytest (22 tests : data, pipeline, train/eval sur MLflow temporaire, API) | [tests/](tests/) |
 | Orchestration / CI | Makefile, GitHub Actions (lint + tests + pipeline + build Docker) | [Makefile](Makefile), [.github/workflows/ci.yml](.github/workflows/ci.yml) |
+| Rapport (généré depuis les runs MLflow) | HTML → PDF | [docs/rapport.pdf](docs/rapport.pdf), [scripts/build_report.py](scripts/build_report.py) |
 
 **Dataset** : [Telco Customer Churn](https://raw.githubusercontent.com/IBM/telco-customer-churn-on-icp4d/master/data/Telco-Customer-Churn.csv) (IBM) — 7 043 clients, 19 features mixtes (numériques + catégorielles), cible binaire `Churn` (26 % de positifs). Téléchargé automatiquement par `make data`.
 
@@ -38,6 +40,9 @@ Toutes les commandes : `make help`.
   evaluate       Score the @champion model, log plots & report to MLflow
   predict        Batch inference. Usage: make predict INPUT=file.csv [OUTPUT=out.csv]
   pipeline       Run the whole pipeline end to end
+  notebook       Execute the EDA notebook (figures -> reports/figures/)
+  report         Build docs/rapport.html + docs/rapport.pdf from MLflow runs
+  lab            Open Jupyter Lab
   test / lint / format
   mlflow-ui / serve
   docker-build / docker-run / docker-up / docker-down
@@ -58,6 +63,9 @@ PROJET_MLOps/
 │  ├─ predict.py              # scoring batch d'un CSV
 │  └─ utils.py                # config, setup MLflow, split, plots
 ├─ app/main.py                # FastAPI : /health, /model-info, /predict, /predict/batch
+├─ notebooks/eda.ipynb        # exploration des données (exécuté, figures dans reports/figures/)
+├─ scripts/build_report.py    # rapport HTML/PDF alimenté par MLflow (docs/rapport.pdf)
+├─ docs/                      # rapport.html + rapport.pdf
 ├─ tests/                     # pytest (fixtures : dataset synthétique + MLflow SQLite temporaire)
 ├─ .github/workflows/ci.yml   # CI : lint, tests, pipeline complet, build Docker
 ├─ Makefile · Dockerfile · docker-compose.yml · pyproject.toml · requirements.txt · .env.example
@@ -70,6 +78,9 @@ PROJET_MLOps/
 ---
 
 ## Le pipeline en détail
+
+### 0. Exploration — `make lab` / `make notebook`
+[notebooks/eda.ipynb](notebooks/eda.ipynb) : qualité des données (11 `TotalCharges` vides = clients à `tenure 0`, 22 doublons), déséquilibre de la cible (26 %), distributions numériques par classe, taux de churn par modalité, corrélations, interaction ancienneté × contrat. Chaque constat est relié à un choix de preprocessing du pipeline (tableau de synthèse en fin de notebook).
 
 ### 1. Données — `make data`
 - Télécharge le CSV une seule fois (`data/raw/`), puis nettoie : `TotalCharges` texte → numérique (blancs → NaN), `SeniorCitizen` → catégorielle, suppression de l'identifiant client et des doublons.
@@ -164,6 +175,10 @@ Les deux modèles sont équivalents en ROC-AUC ; le RandomForest `class_weight="
 - **Conteneurisation** : image auto-suffisante avec healthcheck ; compose pour un serveur MLflow local.
 
 ---
+
+## Rapport
+
+`make report` génère [docs/rapport.pdf](docs/rapport.pdf) (et `.html`) : le script interroge le Model Registry et les runs MLflow pour remplir le tableau des versions/métriques, et embarque les figures de l'EDA et de l'évaluation. Le rapport est donc toujours cohérent avec le dernier `make pipeline`. La conversion PDF utilise Chrome/Edge en mode headless (sinon, ouvrir le HTML et imprimer en PDF).
 
 ## Tests et qualité
 
